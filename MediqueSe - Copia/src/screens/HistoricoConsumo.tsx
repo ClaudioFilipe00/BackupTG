@@ -1,0 +1,137 @@
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../api/api";
+import { estiloHistorico } from "../styles/estiloconsumo";
+
+interface Consumo {
+  id: number;
+  nome: string;
+  dose: string;
+  horario: string;
+  usuarioTelefone: string;
+  status: "Consumido" | "Não consumido";
+  data: string;
+}
+
+interface ConsumoFormatado extends Consumo {
+  data: string;
+  hora: string;
+}
+
+interface Medicamento {
+  id: number;
+  nome: string;
+}
+
+export default function HistoricoConsumo({ navigation }: any) {
+  const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
+  const [selecionado, setSelecionado] = useState<string>("");
+  const [consumos, setConsumos] = useState<ConsumoFormatado[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [telefone, setTelefone] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      const t = await AsyncStorage.getItem("usuarioTelefone");
+      if (!t) return navigation.replace("Cadastro");
+      setTelefone(t);
+      try {
+        const res = await api.get(`/medicamentos?telefone=${t}`);
+        setMedicamentos(res.data || []);
+      } catch {
+        Alert.alert("Erro", "Falha ao carregar medicamentos");
+      }
+    })();
+  }, []);
+
+  const carregarHistorico = async (medicamentoId?: string) => {
+    if (!telefone) return;
+    setLoading(true);
+    try {
+      const res = await api.get<Consumo[]>(`/consumo/${telefone}`);
+      let lista: ConsumoFormatado[] = res.data.map((c: Consumo) => ({
+        ...c,
+        data: new Date(c.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        hora: new Date(c.data).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      }));
+
+      if (medicamentoId) {
+        const nomeSelecionado = medicamentos.find((m) => m.id.toString() === medicamentoId)?.nome;
+        lista = lista.filter((c) => c.nome === nomeSelecionado);
+      }
+
+      setConsumos(lista);
+    } catch {
+      Alert.alert("Erro", "Falha ao buscar histórico");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#cffeff" }} behavior={Platform.select({ ios: "padding", android: undefined })}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: 60, paddingHorizontal: 20, paddingBottom: 40 }}>
+
+        <Text style={estiloHistorico.tituloTela}>HISTÓRICO DE CONSUMO</Text>
+        <Text style={estiloHistorico.subtitulo}>SELECIONE O MEDICAMENTO PARA DETALHES DO CONSUMO</Text>
+
+        <View style={estiloHistorico.pickerContainer}>
+          <Picker
+            selectedValue={selecionado}
+            onValueChange={(v: string) => {
+              setSelecionado(v);
+              carregarHistorico(v);
+            }}
+          >
+            <Picker.Item label="Selecione o medicamento" value="" />
+            {medicamentos.map((m) => (
+              <Picker.Item key={m.id} label={m.nome} value={m.id.toString()} />
+            ))}
+          </Picker>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#0097A7" style={{ marginTop: 20 }} />
+        ) : (
+          <>
+            {consumos.length > 0 && (
+              <View style={estiloHistorico.cabecalhoTabela}>
+                <Text style={estiloHistorico.cabecalhoTexto}>DATA</Text>
+                <Text style={estiloHistorico.cabecalhoTexto}>HORA</Text>
+                <Text style={estiloHistorico.cabecalhoTexto}>DOSE</Text>
+                <Text style={estiloHistorico.cabecalhoTexto}>CONSUMIDO</Text>
+              </View>
+            )}
+
+            {consumos.map((c, i) => (
+              <View key={i} style={estiloHistorico.linhaTabela}>
+                <Text style={estiloHistorico.textoTabela}>{c.data}</Text>
+                <Text style={estiloHistorico.textoTabela}>{c.hora}</Text>
+                <Text style={estiloHistorico.textoTabela}>{c.dose || "-"}</Text>
+                <Text style={estiloHistorico.textoTabela}>{c.status === "Consumido" ? "☑️" : "❌"}</Text>
+              </View>
+            ))}
+          </>
+        )}
+
+        <View style={{ paddingVertical: 20 }}>
+          <TouchableOpacity style={estiloHistorico.button} onPress={() => navigation.goBack()}>
+            <Text style={estiloHistorico.buttonText}>VOLTAR AO MENU</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
