@@ -12,7 +12,7 @@ export default function Cadastro({ navigation }: any) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const init = async () => {
+    const checkUser = async () => {
       const tel = await AsyncStorage.getItem("usuarioTelefone");
       if (tel) {
         navigation.reset({ index: 0, routes: [{ name: "MenuPrincipal", params: { telefone: tel } }] });
@@ -20,7 +20,7 @@ export default function Cadastro({ navigation }: any) {
         try { await api.get("/ping"); } catch {}
       }
     };
-    init();
+    checkUser();
   }, []);
 
   const formatData = (text: string) => {
@@ -67,8 +67,12 @@ export default function Cadastro({ navigation }: any) {
     try {
       const res = await api.post("/usuarios", { nome, telefone: telefoneLimpo, data_nascimento: formatDataParaBanco(dataNascimento) });
       await AsyncStorage.setItem("usuarioTelefone", telefoneLimpo);
-      Alert.alert("Sucesso", `Bem-vindo, ${res.data.nome}!`);
-      navigation.reset({ index: 0, routes: [{ name: "MenuPrincipal", params: { telefone: telefoneLimpo } }] });
+      Alert.alert("Sucesso", `Bem-vindo, ${res.data.nome}!`, [
+        {
+          text: "OK",
+          onPress: () => navigation.reset({ index: 0, routes: [{ name: "Instrucoes", params: { telefone: telefoneLimpo } }] }),
+        },
+      ]);
     } catch (err: any) {
       const message = err?.response?.data?.error || "Erro ao cadastrar. Tente novamente em alguns segundos.";
       Alert.alert("Erro", message);

@@ -35,69 +35,53 @@ export default function MenuPrincipal({ navigation }: any) {
   if (loading) {
     return (
       <View style={[estilosGlobais.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator size="large" color={estilosGlobais.button.backgroundColor} />
       </View>
     );
   }
 
   return (
     <View style={estilosGlobais.container}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%",
-          marginBottom: 20,
-        }}
-      >
-        <Image
-          source={require("../../assets/logo.png")}
-          style={{ width: 150, height: 250 }}
-          resizeMode="contain"
-        />
-        <Text style={{ fontSize: 30, fontWeight: "bold", color: "#0097A7" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", width: "100%", marginBottom: "3%" }}>
+        <Image source={require("../../assets/logo.png")} style={[estilosGlobais.logo, { width: "40%", height: estilosGlobais.logo.height }]} />
+        <Text
+          style={{
+            flex: 1,
+            textAlign: "right",
+            fontSize: estilosGlobais.tituloTela.fontSize * 0.8,
+            fontWeight: "bold",
+            color: estilosGlobais.button.backgroundColor,
+          }}
+        >
           Olá, {primeiroNome}
         </Text>
       </View>
 
-      <Text style={estilosGlobais.tituloTela}>MENU</Text>
+      <Text style={[estilosGlobais.tituloTela, { marginBottom: "3%", fontSize: estilosGlobais.tituloTela.fontSize * 0.9 }]}>MENU</Text>
 
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", width: "100%" }}>
-        <TouchableOpacity
-          style={[estilosGlobais.button, { marginVertical: 15 }]}
-          onPress={() => navigation.navigate("MenuMedicamentos")}
-        >
+        <TouchableOpacity style={[estilosGlobais.button, { marginVertical: "2%" }]} onPress={() => navigation.navigate("MenuMedicamentos")}>
           <Text style={estilosGlobais.buttonText}>MEDICAMENTOS</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[estilosGlobais.button, { marginVertical: 15 }]}
-          onPress={() => navigation.navigate("ListaMedicamentos")}
-        >
+        <TouchableOpacity style={[estilosGlobais.button, { marginVertical: "2%" }]} onPress={() => navigation.navigate("ListaMedicamentos")}>
           <Text style={estilosGlobais.buttonText}>LISTA DE MEDICAMENTOS</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[estilosGlobais.button, { marginVertical: 15 }]}
-          onPress={() => navigation.navigate("HistoricoConsumo")}
-        >
+        <TouchableOpacity style={[estilosGlobais.button, { marginVertical: "2%" }]} onPress={() => navigation.navigate("HistoricoConsumo")}>
           <Text style={estilosGlobais.buttonText}>HISTÓRICO DE CONSUMO</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[estilosGlobais.button, { marginVertical: 15 }]}
-          onPress={() => navigation.navigate("MenuUsuario")}
-        >
+        <TouchableOpacity style={[estilosGlobais.button, { marginVertical: "2%" }]} onPress={() => navigation.navigate("MenuUsuario")}>
           <Text style={estilosGlobais.buttonText}>USUÁRIO</Text>
         </TouchableOpacity>
 
-        <View style={{ marginBottom: 50, alignItems: "center", width: "60%" }}>
+        <View style={{ marginBottom: "3%", alignItems: "center", width: "60%" }}>
           <TouchableOpacity style={estilosGlobais.button} onPress={() => BackHandler.exitApp()}>
-            <Text style={estilosGlobais.buttonText}>SAIR</Text> </TouchableOpacity>
+            <Text style={estilosGlobais.buttonText}>SAIR</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
-
   );
 }

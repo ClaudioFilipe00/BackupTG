@@ -134,7 +134,6 @@ export default function ExcluirMedicamento({ navigation }: any) {
           </TouchableOpacity>
         ))}
 
-
         <TouchableOpacity style={estiloMedicamento.button} onPress={handleExcluir}>
           <Text style={estiloMedicamento.buttonText}>EXCLUIR SELECIONADOS</Text>
         </TouchableOpacity>

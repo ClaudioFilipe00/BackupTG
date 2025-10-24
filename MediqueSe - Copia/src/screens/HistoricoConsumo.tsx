@@ -29,60 +29,56 @@ interface ConsumoFormatado extends Consumo {
   hora: string;
 }
 
-interface Medicamento {
-  id: number;
-  nome: string;
-}
-
 export default function HistoricoConsumo({ navigation }: any) {
-  const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
   const [selecionado, setSelecionado] = useState<string>("");
   const [consumos, setConsumos] = useState<ConsumoFormatado[]>([]);
   const [loading, setLoading] = useState(false);
   const [telefone, setTelefone] = useState<string>("");
+  const [nomesMedicamentos, setNomesMedicamentos] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       const t = await AsyncStorage.getItem("usuarioTelefone");
       if (!t) return navigation.replace("Cadastro");
       setTelefone(t);
-      try {
-        const res = await api.get(`/medicamentos?telefone=${t}`);
-        setMedicamentos(res.data || []);
-      } catch {
-        Alert.alert("Erro", "Falha ao carregar medicamentos");
-      }
+      await carregarHistorico(t);
     })();
   }, []);
 
-  const carregarHistorico = async (medicamentoId?: string) => {
-    if (!telefone) return;
+  const carregarHistorico = async (t?: string) => {
+    const tel = t || telefone;
+    if (!tel) return;
     setLoading(true);
     try {
-      const res = await api.get<Consumo[]>(`/consumo/${telefone}`);
-      let lista: ConsumoFormatado[] = res.data.map((c: Consumo) => ({
+      const res = await api.get<Consumo[]>(`/consumo/${tel}`);
+      const lista: ConsumoFormatado[] = res.data.map((c: Consumo) => ({
         ...c,
         data: new Date(c.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
         hora: new Date(c.data).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
       }));
 
-      if (medicamentoId) {
-        const nomeSelecionado = medicamentos.find((m) => m.id.toString() === medicamentoId)?.nome;
-        lista = lista.filter((c) => c.nome === nomeSelecionado);
-      }
+      // Normaliza nomes: remove strings vazias e evita que dose seja interpretada como nome.
+      const nomesExtraidos = lista
+        .map((c) => (c.nome && typeof c.nome === "string" ? c.nome.trim() : ""))
+        .filter((n) => n !== "" && n !== "(sem nome)");
+
+      const nomesUnicos = Array.from(new Set(nomesExtraidos)).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      setNomesMedicamentos(nomesUnicos);
 
       setConsumos(lista);
-    } catch {
+    } catch (err) {
+      console.error(err);
       Alert.alert("Erro", "Falha ao buscar histórico");
     } finally {
       setLoading(false);
     }
   };
 
+  const consumosFiltrados = selecionado ? consumos.filter((c) => c.nome === selecionado) : [];
+
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#cffeff" }} behavior={Platform.select({ ios: "padding", android: undefined })}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: 60, paddingHorizontal: 20, paddingBottom: 40 }}>
-
         <Text style={estiloHistorico.tituloTela}>HISTÓRICO DE CONSUMO</Text>
         <Text style={estiloHistorico.subtitulo}>SELECIONE O MEDICAMENTO PARA DETALHES DO CONSUMO</Text>
 
@@ -91,12 +87,11 @@ export default function HistoricoConsumo({ navigation }: any) {
             selectedValue={selecionado}
             onValueChange={(v: string) => {
               setSelecionado(v);
-              carregarHistorico(v);
             }}
           >
-            <Picker.Item label="Selecione o medicamento" value="" />
-            {medicamentos.map((m) => (
-              <Picker.Item key={m.id} label={m.nome} value={m.id.toString()} />
+            <Picker.Item label="Selecione um Medicamento" value="" />
+            {nomesMedicamentos.map((n, i) => (
+              <Picker.Item key={i} label={n} value={n} />
             ))}
           </Picker>
         </View>
@@ -105,7 +100,7 @@ export default function HistoricoConsumo({ navigation }: any) {
           <ActivityIndicator size="large" color="#0097A7" style={{ marginTop: 20 }} />
         ) : (
           <>
-            {consumos.length > 0 && (
+            {consumosFiltrados.length > 0 && (
               <View style={estiloHistorico.cabecalhoTabela}>
                 <Text style={estiloHistorico.cabecalhoTexto}>DATA</Text>
                 <Text style={estiloHistorico.cabecalhoTexto}>HORA</Text>
@@ -114,7 +109,7 @@ export default function HistoricoConsumo({ navigation }: any) {
               </View>
             )}
 
-            {consumos.map((c, i) => (
+            {consumosFiltrados.map((c, i) => (
               <View key={i} style={estiloHistorico.linhaTabela}>
                 <Text style={estiloHistorico.textoTabela}>{c.data}</Text>
                 <Text style={estiloHistorico.textoTabela}>{c.hora}</Text>
@@ -122,6 +117,12 @@ export default function HistoricoConsumo({ navigation }: any) {
                 <Text style={estiloHistorico.textoTabela}>{c.status === "Consumido" ? "☑️" : "❌"}</Text>
               </View>
             ))}
+
+            {consumosFiltrados.length === 0 && !loading && (
+              <Text style={{ textAlign: "center", marginTop: 20, color: "#333" }}>
+                Nenhum registro encontrado.
+              </Text>
+            )}
           </>
         )}
 
@@ -130,7 +131,6 @@ export default function HistoricoConsumo({ navigation }: any) {
             <Text style={estiloHistorico.buttonText}>VOLTAR AO MENU</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );

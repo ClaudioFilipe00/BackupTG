@@ -20,6 +20,10 @@ export default function MenuUsuario({ navigation }: MenuUsuarioProps) {
                     <Text style={estilosGlobais.buttonText}>EXCLUIR USUÁRIO</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity style={[estilosGlobais.button, { marginVertical: 15 }]} onPress={() => navigation.navigate("Instrucoes")}>
+                    <Text style={estilosGlobais.buttonText}>MANUAL DE INSTRUÇÕES</Text>
+                </TouchableOpacity>
+
                 <View style={{ marginTop: 30, width: "100%", alignItems: "center" }}>
                     <TouchableOpacity style={estilosGlobais.button} onPress={() => navigation.navigate("MenuPrincipal")}>
                         <Text style={estilosGlobais.buttonText}>VOLTAR AO MENU</Text>
