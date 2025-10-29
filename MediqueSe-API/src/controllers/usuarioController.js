@@ -14,9 +14,11 @@ export const criarUsuario = async (req, res) => {
     const user = await Usuario.create({ nome, telefone, data_nascimento });
     return res.status(201).json(user);
   } catch (err) {
-    console.error(err);
+    console.error("Erro ao criar usuário:", err.message);
+    console.error("Stack:", err);
     return res.status(500).json({ error: "Erro ao criar usuário." });
   }
+
 };
 
 // Rota usada para login pelo telefone
@@ -29,6 +31,23 @@ export const obterUsuarioPorTelefone = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao buscar usuário." });
+  }
+};
+
+export const loginUsuario = async (req, res) => {
+  try {
+    const { telefone, data_nascimento } = req.body;
+    if (!telefone || !data_nascimento)
+      return res.status(400).json({ error: "Telefone e data de nascimento são obrigatórios." });
+
+    const user = await Usuario.findOne({ where: { telefone, data_nascimento } });
+    if (!user)
+      return res.status(401).json({ error: "Telefone ou data de nascimento incorretos." });
+
+    return res.json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao efetuar login." });
   }
 };
 

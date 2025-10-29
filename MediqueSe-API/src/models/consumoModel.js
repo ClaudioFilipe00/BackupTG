@@ -12,6 +12,7 @@ export const Consumo = sequelize.define("Consumo", {
     allowNull: false,
   },
   data: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  medicamentoId: { type: DataTypes.INTEGER, allowNull: true }, // permite null
 }, {
   tableName: "consumos",
   timestamps: true,

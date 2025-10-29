@@ -1,4 +1,5 @@
 import { Consumo } from "../models/consumoModel.js";
+import { Medicamento } from "../models/medicamentoModel.js";
 
 export const registrarConsumo = async (req, res) => {
   try {
@@ -17,11 +18,35 @@ export const registrarConsumo = async (req, res) => {
 export const listarConsumoPorUsuario = async (req, res) => {
   try {
     const { usuarioTelefone } = req.params;
+
     const consumos = await Consumo.findAll({
       where: { usuarioTelefone },
+      include: [
+        {
+          model: Medicamento,
+          required: false,
+          attributes: ["nome"],
+        },
+      ],
       order: [["data", "DESC"]],
     });
-    return res.json(consumos);
+
+    const resultado = consumos.map((c) => {
+      // c pode ser instancia do Sequelize com c.dataValues, etc.
+      const medicamentoNome = c.Medicamento && c.Medicamento.nome ? c.Medicamento.nome : null;
+      const nomeFinal = medicamentoNome || (c.nome ? c.nome : "(sem nome)");
+      return {
+        id: c.id,
+        nome: nomeFinal,
+        dose: c.dose,
+        horario: c.horario,
+        usuarioTelefone: c.usuarioTelefone,
+        status: c.status,
+        data: c.data,
+      };
+    });
+
+    return res.json(resultado);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao listar consumos." });

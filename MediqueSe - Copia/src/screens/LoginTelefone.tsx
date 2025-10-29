@@ -1,15 +1,7 @@
 import React, { useState } from "react";
 import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  Alert,
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  View, TextInput, TouchableOpacity, Text, Alert,
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/api";
@@ -17,15 +9,24 @@ import { estilosGlobais } from "../styles/estilos";
 
 export default function LoginTelefone({ navigation }: any) {
   const [telefone, setTelefone] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const pingServidor = async () => {
-    try {
-      await api.get("/ping");
-      return true;
-    } catch {
-      return false;
-    }
+  const formatarTelefone = (text: string) => {
+    let cleaned = text.replace(/\D/g, "").slice(0, 11);
+
+    let formatted = cleaned;
+    if (cleaned.length > 2) formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    if (cleaned.length > 7) formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+
+    setTelefone(formatted);
+  };
+
+  const formatarData = (text: string) => {
+    let cleaned = text.replace(/\D/g, "").slice(0, 8);
+    if (cleaned.length > 4) cleaned = cleaned.replace(/^(\d{2})(\d{2})(\d{0,4})$/, "$1/$2/$3");
+    else if (cleaned.length > 2) cleaned = cleaned.replace(/^(\d{2})(\d{0,2})$/, "$1/$2");
+    setDataNascimento(cleaned);
   };
 
   const handleLogin = async () => {
@@ -33,38 +34,29 @@ export default function LoginTelefone({ navigation }: any) {
     if (!telefoneNumeros || telefoneNumeros.length !== 11)
       return Alert.alert("Atenção", "Digite um telefone válido.");
 
-    setLoading(true);
-    const servidorOnline = await pingServidor();
-    if (!servidorOnline) {
-      setLoading(false);
-      return Alert.alert("Erro", "Servidor temporariamente indisponível. Tente novamente em alguns segundos.");
-    }
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataNascimento))
+      return Alert.alert("Atenção", "Digite a data de nascimento no formato DD/MM/AAAA.");
 
+    const [dia, mes, ano] = dataNascimento.split("/");
+    const dataFormatada = `${ano}-${mes}-${dia}`;
+
+    setLoading(true);
     try {
-      const res = await api.get(`/usuarios/telefone/${telefoneNumeros}`);
-      if (!res.data) return Alert.alert("Erro", "Usuário não encontrado.");
+      const res = await api.post("/usuarios/login", {
+        telefone: telefoneNumeros,
+        data_nascimento: dataFormatada,
+      });
       await AsyncStorage.setItem("usuarioTelefone", telefoneNumeros);
-      navigation.reset({ index: 0, routes: [{ name: "MenuPrincipal", params: { telefone: telefoneNumeros } }] });
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "MenuPrincipal", params: { telefone: telefoneNumeros } }],
+      });
     } catch (err: any) {
-      const message = err?.response?.data?.error || "Erro ao buscar usuário. Tente novamente.";
+      const message = err?.response?.data?.error || "Erro ao fazer login.";
       Alert.alert("Erro", message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatarTelefone = (text: string) => {
-    let cleaned = text.replace(/\D/g, "").slice(0, 11);
-    if (cleaned.length > 10) {
-      cleaned = cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-    } else if (cleaned.length > 5) {
-      cleaned = cleaned.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
-    } else if (cleaned.length > 2) {
-      cleaned = cleaned.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
-    } else if (cleaned.length > 0) {
-      cleaned = cleaned.replace(/^(\d*)$/, "($1");
-    }
-    setTelefone(cleaned);
   };
 
   return (
@@ -94,6 +86,16 @@ export default function LoginTelefone({ navigation }: any) {
           style={estilosGlobais.input}
           keyboardType="number-pad"
           maxLength={15}
+        />
+
+        <TextInput
+          placeholder="Data de nascimento (DD/MM/AAAA)"
+          placeholderTextColor="#999"
+          value={dataNascimento}
+          onChangeText={formatarData}
+          style={estilosGlobais.input}
+          keyboardType="number-pad"
+          maxLength={10}
         />
 
         <TouchableOpacity

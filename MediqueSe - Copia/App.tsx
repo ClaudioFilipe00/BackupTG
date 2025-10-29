@@ -19,7 +19,7 @@ import ListaMedicamentos from "./src/screens/ListaMedicamentos";
 import HistoricoConsumo from "./src/screens/HistoricoConsumo";
 import ConfirmarConsumo from "./src/screens/ConfirmarConsumo";
 import LoginTelefone from "./src/screens/LoginTelefone";
-
+import Instrucoes from "./src/screens/Instrucoes"
 
 const Stack = createNativeStackNavigator();
 
@@ -100,6 +100,7 @@ export default function App() {
         <Stack.Screen name="HistoricoConsumo" component={HistoricoConsumo} />
         <Stack.Screen name="ConfirmarConsumo" component={ConfirmarConsumo} />
         <Stack.Screen name="LoginTelefone" component={LoginTelefone} />
+        <Stack.Screen name="Instrucoes" component={Instrucoes} />
       </Stack.Navigator>
     </NavigationContainer>
   );

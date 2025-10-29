@@ -12,7 +12,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 Usuario.hasMany(Medicamento, {
   foreignKey: "usuarioId",
   onDelete: "CASCADE",
@@ -21,7 +20,6 @@ Usuario.hasMany(Medicamento, {
 Medicamento.belongsTo(Usuario, {
   foreignKey: "usuarioId",
 });
-
 
 Usuario.hasMany(Consumo, {
   foreignKey: "usuarioTelefone",
@@ -36,11 +34,12 @@ Consumo.belongsTo(Usuario, {
 
 Medicamento.hasMany(Consumo, {
   foreignKey: "medicamentoId",
-  onDelete: "CASCADE",
   onUpdate: "CASCADE",
+  onDelete: "SET NULL", // Mantém histórico mesmo que o medicamento seja deletado
 });
 Consumo.belongsTo(Medicamento, {
   foreignKey: "medicamentoId",
+  onDelete: "SET NULL",
 });
 
 app.use("/usuarios", usuarioRoutes);
